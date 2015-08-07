@@ -17,6 +17,7 @@
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
-- (void) addHotMap;
+- (void)renderHotMap:(NSArray *)mapArray;
+- (void)moveCenter:(NSDictionary *)center;
 
 @end

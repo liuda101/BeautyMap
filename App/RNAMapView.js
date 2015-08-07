@@ -2,16 +2,32 @@ var React = require('react-native');
 
 var {
   requireNativeComponent,
-  PropTypes
+  PropTypes,
+  NativeModules: {
+    RNAMapViewManager
+  },
 } = React;
 
 
 
 var MapView = React.createClass({
+  getViewHandle: function() {
+    return React.findNodeHandle(this.refs.mapView);
+  },
+  setHotMap: function(mapArray) {
+    RNAMapViewManager.renderHotMap(this.getViewHandle(), mapArray, function() {
 
+    });
+  },
+
+  setCenter: function(center) {
+    RNAMapViewManager.setCenter(this.getViewHandle(), center, function() {
+
+    });
+  },
   render: function() {
     return (
-      <RNAMapView {... this.props} />
+      <RNAMapView ref={'mapView'} {... this.props} />
     );
   }
 });

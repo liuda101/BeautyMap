@@ -13,6 +13,7 @@
 {
   RCTEventDispatcher *_eventDispatcher;
   MAMapView *_mapView;
+  MAHeatMapTileOverlay *_hotOverlay;
 }
 
 RCT_NOT_IMPLEMENTED(-initWithFrame:(CGRect)frame)
@@ -44,17 +45,41 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
   return self;
 }
 
-- (void) addHotMap
+- (void)renderHotMap:(NSArray *)mapArray
 {
-  MAHeatMapTileOverlay *heatMapTileOverlay = [[MAHeatMapTileOverlay alloc] init];
+  if (_hotOverlay != nil) {
+    [_mapView removeOverlay:_hotOverlay];
+  }
+  _hotOverlay = [[MAHeatMapTileOverlay alloc] init];
   
   NSMutableArray * data = [NSMutableArray array];
-  heatMapTileOverlay.data = data;
   
-  MAHeatMapGradient *gradient = [[MAHeatMapGradient alloc] initWithColor:@[[UIColor blueColor],[UIColor greenColor], [UIColor redColor]] andWithStartPoints:@[@(0.2),@(0.5),@(0.9)]];
-  heatMapTileOverlay.gradient = gradient;
+  for (NSDictionary *dic in mapArray) {
+    MAHeatMapNode *node = [[MAHeatMapNode alloc] init];
+    
+    CLLocationCoordinate2D coordinate;
+    coordinate.latitude = [dic[@"latitude"] doubleValue];
+    coordinate.longitude = [dic[@"longitude"] doubleValue];
+    node.coordinate = coordinate;
+    
+    node.intensity = [dic[@"intensity"] doubleValue];
+    
+    [data addObject:node];
+  }
   
-  [_mapView addOverlay: heatMapTileOverlay];
+  _hotOverlay.data = data;
+  
+  _hotOverlay.radius = 25;
+  
+  [_mapView addOverlay: _hotOverlay];
+}
+
+- (void)moveCenter:(NSDictionary *)center
+{
+  CLLocationCoordinate2D coordinate;
+  coordinate.latitude = [center[@"latitude"] doubleValue];
+  coordinate.longitude = [center[@"longitude"] doubleValue];
+  [_mapView setCenterCoordinate:coordinate animated:YES];
 }
 
 - (double)zoomLevel
@@ -66,6 +91,8 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 {
   [_mapView setZoomLevel:zoomLevel animated:NO];
 }
+
+#pragma # MapView Delegate
 
 - (MAOverlayView *)mapView:(MAMapView *)mapView viewForOverlay:(id<MAOverlay>)overlay
 {

@@ -9,6 +9,14 @@ var {
   TouchableHighlight
 } = React;
 
+var Model = require('./Model');
+
+var {
+  BoyRecord,
+  GirlRecord
+} = Model;
+
+var AV = require('avoscloud-sdk').AV;
 
 var MapView = require('./RNAMapView');
 var UploadingView = require('./UploadingView');
@@ -39,6 +47,45 @@ var MainView = React.createClass({
         toValue: 1
       }).start();
     });
+
+    self.fetchData();
+  },
+
+  fetchData: function() {
+    var query = new AV.Query(BoyRecord);
+    var self = this;
+    query.find({
+      success: function(data) {
+        var ary = [];
+
+        for(var i = 0; i < data.length; i ++) {
+          var pos = data[i].toJSON();
+          ary.push({
+            longitude: pos.position.longitude,
+            latitude: pos.position.latitude,
+            intensity: pos.count
+          });
+        }
+
+        self.refs.mapView.setHotMap(ary);
+      }
+    });
+  },
+
+  componentDidMount: function() {
+    this.fetchData();
+
+    navigator.geolocation.getCurrentPosition(
+      (initialPosition) => {
+        console.log('abc');
+        this.refs.mapView.setCenter({
+          latitude: initialPosition.coords.latitude,
+          longitude: initialPosition.coords.longitude
+        });
+      },
+      (error) => console.log(error.message),
+      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
+    );
   },
 
   render: function() {

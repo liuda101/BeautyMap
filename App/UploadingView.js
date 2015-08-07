@@ -75,22 +75,56 @@ var UploadingView = React.createClass({
     var RecordObj = RECORDS[type];
     var rObj = new RecordObj();
 
-    rObj.set('position', new AV.GeoPoint({latitude: position.coords.latitude, longitude: position.coords.longitude}));
-    rObj.save(null, {
-      success: function(result) {
-        self.setState({
-          uploading: false
-        });
+    var currentPosition = new AV.GeoPoint({latitude: position.coords.latitude, longitude: position.coords.longitude});
 
-        Animated.timing(self.state.uploadingOpacity, {
-          toValue: 0,
-          duration: 300,
-          delay: 0
-        }).start(function() {
-          if (self.props.onUploadSuccess) {
-            self.props.onUploadSuccess(type);
-          }
-        });
+    rObj.set('position', currentPosition);
+
+    var query = new AV.Query(RecordObj);
+    query.withinKilometers('position', currentPosition, 0.03);
+    query.find({
+      success: function(results) {
+        if (results.length > 0) {
+          var theRecord = results[0];
+          theRecord.set('count', theRecord.get('count') + 1);
+          theRecord.save(null, {
+            success: function() {
+              self.setState({
+                uploading: false
+              });
+
+              Animated.timing(self.state.uploadingOpacity, {
+                toValue: 0,
+                duration: 300,
+                delay: 0
+              }).start(function() {
+                if (self.props.onUploadSuccess) {
+                  self.props.onUploadSuccess(type);
+                }
+              });
+            }
+          });
+        } else {
+          rObj.save(null, {
+            success: function(result) {
+              self.setState({
+                uploading: false
+              });
+
+              Animated.timing(self.state.uploadingOpacity, {
+                toValue: 0,
+                duration: 300,
+                delay: 0
+              }).start(function() {
+                if (self.props.onUploadSuccess) {
+                  self.props.onUploadSuccess(type);
+                }
+              });
+            }
+          });
+        }
+      },
+      error: function() {
+
       }
     });
   },
